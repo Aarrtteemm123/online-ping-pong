@@ -20,17 +20,31 @@ def close_connection(exception):
 
 @app.route('/delete_server',methods=['DELETE'])
 def delete_server():
-    pass
+    name = request.form.get('name')
+    db = get_db()
+    db.execute('delete from available_servers where name=?', (name,))
+    db.commit()
+    return Response('The server was successfully deleted')
 
 @app.route('/connect_to_server',methods=['PUT'])
 def connect_to_server():
     name = request.form.get('name')
-    ip = request.form.get('ip')
-    port = request.form.get('port')
-    number_players = request.form.get('players')
-    max_players = request.form.get('max_players')
+    db = get_db()
+    data = db.execute('select players, max_players from available_servers where name=?',(name,)).fetchall()
+    if len(data) == 0:
+        return Response('The server does not exist')
+    elif data[0][0] == data[0][1]:
+        return Response('The server is full')
+    elif data[0][0] < data[0][1]:
+        db.execute('update available_servers set players=? where name=?',(data[0][0]+1,name))
+        db.commit()
+        return Response('Ok')
+    else:
+        res = app.make_response('Unknown error:(')
+        res.status_code = 500
+        return res
 
-@app.route('/register_server',methods=['GET'])
+@app.route('/register_server',methods=['POST'])
 def register_server():
     name = request.form.get('name')
     ip = request.form.get('ip')
@@ -48,7 +62,8 @@ def register_server():
     except Exception as e:
         res = app.make_response(str(e))
         res.status_code = 500
-    return res
+        return res
+    return Response('The server is successfully registered')
 
 @app.route('/get_servers',methods=['GET'])
 def get_servers():
