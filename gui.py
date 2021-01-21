@@ -9,21 +9,22 @@ main_menu_layout = [[sg.Text('Start menu', justification='center', size=(100, 3)
 
 multiplayer_menu_layout = [
     [sg.Text('Multiplayer game', justification='center', size=(100, 2))],
-    [sg.Text('Name:  '), sg.Input()],
-    [sg.Text('IP:       '), sg.Input()],
-    [sg.Text('Port:    '), sg.Input()],
-    [sg.Text('Select number of players'), sg.Combo(['2', '4'], default_value=2, size=(10, 2))],
+    [sg.Text('Name:          '), sg.Input()],
+    [sg.Text('Server name:'), sg.Input()],
+    [sg.Text('IP:               '), sg.Input()],
+    [sg.Text('Port:            '), sg.Input()],
+    [sg.Text('Select number of players'), sg.Combo(['2','3','4'], default_value=2, size=(10, 2))],
     [sg.Button('Run server', size=(100, 2))],
     [sg.Button('Connect to server', size=(100, 2))],
     [sg.Button('Show available servers list', size=(100, 2))],
     [sg.Button('Back', size=(100, 2))]]
 
-data = [['127.0.0.1', '8080', '1/2'] for __ in range(5)]
-headings = ['IP address', 'Port', 'Players']
+data = [['qwerty','127.0.0.1', '8080', '1/2'] for __ in range(5)]
+headings = ['Server name','IP address', 'Port', 'Players']
 servers_list_layout = [
     [sg.Text('Available servers', justification='center', size=(100, 2))],
-    [sg.Table(values=data, headings=headings, size=(10, 7),
-              display_row_numbers=True, pad=(65, 10),
+    [sg.Table(values=data, headings=headings, size=(20, 7),
+              display_row_numbers=True, pad=(10, 10),
               auto_size_columns=True,
               key='-TABLE-',row_height=30)],
     [sg.Button('Update', size=(100, 2))],
@@ -53,7 +54,7 @@ while True:
         pass
 
     elif event == 'Update':
-        data.append(['127.0.0.1', '8080', '1/2'])
+        data.append(['my server','127.0.0.1', '8080', '1/2'])
         window['-TABLE-'].update(values=data)
 
     elif event == 'Back to menu':
