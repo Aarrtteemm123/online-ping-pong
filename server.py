@@ -32,7 +32,7 @@ def service_connection(key, mask):
             data.outb = data.outb[sent:]
 
 
-host = '127.0.0.1'
+host = ''
 port = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
