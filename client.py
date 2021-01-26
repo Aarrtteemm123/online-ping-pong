@@ -1,11 +1,20 @@
 import socket
 
-HOST = '46.151.249.136'
+HOST = 'localhost'
 PORT = 65432
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
-    s.sendall(b'Hello, world')
-    data = s.recv(1024)
+class Client:
+    def __init__(self,host,port):
+        self.host = host
+        self.port = port
 
-print('Received', repr(data))
+    def send(self,data):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self.host, self.port))
+            s.sendall(data)
+            response = s.recv(1024)
+        return response
+
+client = Client(HOST,PORT)
+res = client.send(b'Hello network!')
+print(res)
