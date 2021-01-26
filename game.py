@@ -22,7 +22,7 @@ def update(dt):
     for player in game.players:
         player.platform.update(dt)
     game.ball.update(dt)
-    game.ball.check_bounds(WINDOW_WIDTH,WINDOW_HEIGHT,BOARD_POS_X,BOARD_POS_Y)
+    game.check_wall_collision(dt)
 
 @window.event
 def on_draw():

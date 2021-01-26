@@ -69,6 +69,32 @@ class Game:
                                   anchor_x='left', anchor_y='top'),
             ]
 
+    def check_wall_collision(self):
+        w, h = self.board.width, self.board.height
+        collision = self.ball.check_bounds(WINDOW_WIDTH,WINDOW_HEIGHT,BOARD_POS_X,BOARD_POS_Y)
+        if collision == 'left':
+            self.players[0].score += 1
+            self.labels_lst[0] = pyglet.text.Label(f'{self.players[0].name} - {self.players[0].score}', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.2, anchor_x='left', anchor_y='top')
+        elif collision == 'top':
+            self.players[1].score += 1
+            self.labels_lst[1] = pyglet.text.Label(f'{self.players[1].name} - {self.players[1].score}',
+                                        font_name='Times New Roman', font_size=FONT_SIZE, x=10,
+                                        y=h * 0.4, anchor_x='left', anchor_y='top')
+        elif collision == 'right':
+            self.players[2].score += 1
+            self.labels_lst[2] = pyglet.text.Label(f'{self.players[2].name} - {self.players[2].score}',
+                                        font_name='Times New Roman', font_size=FONT_SIZE, x=10,
+                                        y=h * 0.6, anchor_x='left', anchor_y='top')
+        elif collision == 'bottom':
+            self.players[3].score += 1
+            self.labels_lst[3] = pyglet.text.Label(f'{self.players[3].name} - {self.players[3].score}',
+                                        font_name='Times New Roman', font_size=FONT_SIZE, x=10,
+                                        y=h * 0.8, anchor_x='left', anchor_y='top')
+
+
+    def set_score(self,player_name,new_score):
+        pass
+
     def draw_labels(self):
         for label in self.labels_lst:
             label.draw()
@@ -107,15 +133,19 @@ class Ball(pyglet.shapes.Circle):
         if self.x < min_x + self.radius:
             self.x = min_x + self.radius
             self.speed_x *= -1
+            return 'left'
         elif self.x > max_x - self.radius:
             self.x = max_x - self.radius
             self.speed_x *= -1
-        if self.y < min_y + self.radius:
+            return 'right'
+        elif self.y < min_y + self.radius:
             self.y = min_y + self.radius
             self.speed_y *= -1
+            return 'bottom'
         elif self.y > max_y - self.radius:
             self.y = max_y - self.radius
             self.speed_y *= -1
+            return 'top'
 
 
 class Platform(pyglet.shapes.Rectangle):
