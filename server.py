@@ -1,56 +1,56 @@
 import socket
-import selectors
-import types
+import threading
+import time
 
-sel = selectors.DefaultSelector()
+from client import Client
 
+HOST = 'localhost'
+PORT = 65432 # 65432
 
-def accept_wrapper(sock):
-    conn, addr = sock.accept()  # Should be ready to read
-    print("accepted connection from", addr)
-    conn.setblocking(False)
-    data = types.SimpleNamespace(addr=addr, inb=b"", outb=b"")
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    sel.register(conn, events, data=data)
+class Server:
+    def __init__(self,host, port):
+        self.host = host
+        self.port = port
+        self.__is_running = True
+        self.__connection_addr_dict = {}
 
+    def __run(self):
+        print('starting server on ', (self.host,self.port))
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((self.host, self.port))
+            s.listen()
+            while self.__is_running:
+                connection, address = s.accept()
+                print('accepted connection from ', address)
+                self.__connection_addr_dict[address] = b''
+                connection_thread = threading.Thread(target=self.__listen_new_connection, args=(connection, address))
+                connection_thread.start()
+        self.__connection_addr_dict.clear()
+        print('server stopping... ', (self.host, self.port))
 
-def service_connection(key, mask):
-    sock = key.fileobj
-    data = key.data
-    if mask & selectors.EVENT_READ:
-        recv_data = sock.recv(1024)  # Should be ready to read
-        if recv_data:
-            data.outb += recv_data
-        else:
-            print("closing connection to", data.addr)
-            sel.unregister(sock)
-            sock.close()
-    if mask & selectors.EVENT_WRITE:
-        if data.outb:
-            print("echoing", repr(data.outb), "to", data.addr)
-            sent = sock.send(data.outb)  # Should be ready to write
-            data.outb = data.outb[sent:]
+    def close_connection(self, addr):
+        if addr in self.__connection_addr_dict:
+            self.__connection_addr_dict.pop(addr)
 
+    def start(self):
+        server_tread = threading.Thread(target=self.__run)
+        server_tread.start()
 
-host = ''
-port = 65432        # Port to listen on (non-privileged ports are > 1023)
+    def stop(self):
+        self.__is_running = False
+        Client(self.host,self.port).send(b'')
 
-lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-lsock.bind((host, port))
-lsock.listen()
-print("listening on", (host, port))
-lsock.setblocking(False)
-sel.register(lsock, selectors.EVENT_READ, data=None)
+    def __listen_new_connection(self, connection, address):
+        with connection:
+            print('connected by', address)
+            while address in self.__connection_addr_dict:
+                data = connection.recv(1024)
+                print(data)
+                if not data:
+                    continue
+                connection.sendall(data)
+        self.close_connection(address)
+        print('closing connection to', address)
 
-try:
-    while True:
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            if key.data is None:
-                accept_wrapper(key.fileobj)
-            else:
-                service_connection(key, mask)
-except Exception as e:
-    print(str(e))
-finally:
-    sel.close()
+server = Server(HOST,PORT)
+server.start()
