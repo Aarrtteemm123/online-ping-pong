@@ -1,4 +1,5 @@
 import socket
+import sys
 import time
 
 HOST = 'localhost'
@@ -9,32 +10,24 @@ class Client:
         self.host = host
         self.port = port
         self.__socket = None
-        self.__close_msg = b'closing connection'
 
     def connect(self):
         if self.__socket is not None:
             self.close()
-        else:
-            self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__socket.connect((self.host, self.port))
+        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__socket.connect((self.host, self.port))
 
     def send(self, data):
-        if data == self.__close_msg:
-            raise Exception('It\'s reserved message')
-        elif self.__socket is None:
+        if self.__socket is None:
             raise Exception('The client has no connection')
         else:
-            self.__socket.sendall(data)
-            response = self.__socket.recv(1024)
-            return response
+            try:
+                self.__socket.sendall(data)
+                response = self.__socket.recv(1024)
+                return response
+            except ConnectionResetError as e:
+                print(e)
+                self.close()
 
     def close(self):
-        self.__socket.sendall(self.__close_msg)
         self.__socket.close()
-
-
-if __name__ == '__main__':
-    for i in range(1):
-        print(i)
-        client = Client(HOST,PORT)
-        print(client.send(b'Hello network'+bytes(str(i),'utf-8')))

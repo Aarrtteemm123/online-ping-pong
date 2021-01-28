@@ -1,7 +1,6 @@
 import socket
 import threading
 import time
-
 from client import Client
 
 HOST = 'localhost'
@@ -28,7 +27,7 @@ class Server:
         self.__connection_addr_dict.clear()
         print('server stopping... ', (self.host, self.port))
 
-    def close_connection(self, addr):
+    def __close_connection(self, addr):
         if addr in self.__connection_addr_dict:
             self.__connection_addr_dict.pop(addr)
 
@@ -38,19 +37,24 @@ class Server:
 
     def stop(self):
         self.__is_running = False
-        Client(self.host,self.port).send(b'')
+        client = Client(self.host,self.port)
+        client.connect()
+        client.send(b'Bye!')
+        client.close()
 
     def __listen_new_connection(self, connection, address):
         with connection:
             print('connected by', address)
             while address in self.__connection_addr_dict:
-                data = connection.recv(1024)
-                print(data)
-                if not data:
-                    continue
-                connection.sendall(data)
-        self.close_connection(address)
+                try:
+                    time.sleep(5)
+                    data = connection.recv(1024)
+                    print(data)
+                    if not data:
+                        continue
+                    connection.sendall(data)
+                except ConnectionResetError as e:
+                    print(e)
+                    break
+        self.__close_connection(address)
         print('closing connection to', address)
-
-server = Server(HOST,PORT)
-server.start()
