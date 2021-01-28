@@ -16,7 +16,7 @@ def get_db():
 def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
-        db.close()
+        db.disconnect()
 
 @app.route('/delete_server',methods=['DELETE'])
 def delete_server():
