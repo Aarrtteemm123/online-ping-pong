@@ -1,6 +1,4 @@
 import socket
-import threading
-import time
 
 HOST = 'localhost'
 PORT = 65432
@@ -9,13 +7,7 @@ class Client:
     def __init__(self,host,port):
         self.host = host
         self.port = port
-        self.__response = None
         self.__socket = None
-
-    @property
-    def data(self):
-        print(self.__response)
-        return self.__response
 
     def connect(self):
         if self.__socket is not None:
@@ -32,9 +24,12 @@ class Client:
         else:
             try:
                 self.__socket.sendall(data)
-                self.__response = self.__socket.recv(1024)
-                return self.__response
+                response = self.__socket.recv(1024)
+                return response
             except ConnectionResetError as e:
+                print(e)
+                self.disconnect()
+            except ConnectionAbortedError as e:
                 print(e)
                 self.disconnect()
 

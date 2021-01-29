@@ -1,5 +1,7 @@
 import socket
 import threading
+import time
+
 from client import Client
 
 HOST = 'localhost'
@@ -20,7 +22,7 @@ class Server:
     def send(self, addr, data):
         with self.__lock:
             if addr in self.__connection_addr_dict:
-                self.__connection_addr_dict[addr]['send'] = data
+                self.__connection_addr_dict[addr]['send'].append(data)
             else:
                 raise Exception('Connection does not exist')
 
@@ -32,7 +34,7 @@ class Server:
             while self.__is_running:
                 connection, address = s.accept()
                 print('accepted connection from ', address)
-                self.__connection_addr_dict[address] = dict(send=b'',get=b'')
+                self.__connection_addr_dict[address] = dict(send=[],get=b'')
                 connection_thread = threading.Thread(target=self.__listen_new_connection, args=(connection, address))
                 connection_thread.start()
         self.__connection_addr_dict.clear()
@@ -65,14 +67,13 @@ class Server:
             while address in self.__connection_addr_dict:
                 try:
                     data = connection.recv(1024)
-                    print(data)
                     with self.__lock:
                         if data:
                             self.__connection_addr_dict[address]['get'] = data
-                            connection.sendall(b'ok')
-                        if self.__connection_addr_dict[address]['send'] != b'':
-                            connection.sendall(self.__connection_addr_dict[address]['send'])
-                            self.__connection_addr_dict[address]['send'] = b''
+                            if self.__connection_addr_dict[address]['send']:
+                                connection.sendall(self.__connection_addr_dict[address]['send'].pop(0))
+                            else:
+                                connection.sendall(b' ')
                 except ConnectionResetError as e:
                     print(e)
                     break
@@ -80,6 +81,3 @@ class Server:
                     print(e)
         self.__close_connection(address)
         print('closing connection to', address)
-
-server = Server(HOST,PORT)
-server.start()
