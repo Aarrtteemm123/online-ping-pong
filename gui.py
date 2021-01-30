@@ -2,6 +2,12 @@ import PySimpleGUI as sg
 import threading
 
 class Gui:
+
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Gui, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self):
         self.__is_running = True
 

@@ -38,7 +38,7 @@ class Server:
         self.__connection_addr_dict.clear()
         print('server stopping... ', (self.host, self.port))
 
-    def __close_connection(self, addr):
+    def close_connection(self, addr):
         with self.__lock:
             if addr in self.__connection_addr_dict:
                 self.__connection_addr_dict.pop(addr)
@@ -83,5 +83,5 @@ class Server:
                     break
                 except Exception as e:
                     print(e)
-        self.__close_connection(address)
+        self.close_connection(address)
         print('closing connection to', address)

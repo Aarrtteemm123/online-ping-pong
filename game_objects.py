@@ -11,89 +11,70 @@ class Game:
         w, h = self.board.width, self.board.height
         self.ball = Ball(x=dx + w // 2, y=dy + h // 2, radius=BALL_RADIUS, segments=BALL_SEGMENTS, color=BALL_COLOR)
         if self.number_players == 1:
-            self.players = [Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
-                            Bot('Bot', Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT))]
+            self.players = [
+                Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
+                Bot('Bot', Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT))
+            ]
             self.labels_lst = [
-                pyglet.text.Label(f'{player_names[0]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.25,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label('Bot - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.75,
-                                  anchor_x='left', anchor_y='top'),
+                self.__get_label(player_names[0], 0, h * 0.25),
+                self.__get_label('Bot', 0, h * 0.75)
             ]
         elif self.number_players == 2:
-            self.players = [Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
-                            Player(player_names[1],
-                                   Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT))]
+            self.players = [
+                Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
+                Player(player_names[1], Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT))
+            ]
             self.labels_lst = [
-                pyglet.text.Label(f'{player_names[0]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.25,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label(f'{player_names[1]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.75,
-                                  anchor_x='left', anchor_y='top'),
+                self.__get_label(player_names[0], 0, h * 0.25),
+                self.__get_label(player_names[1], 0, h * 0.75)
             ]
         elif self.number_players == 3:
-            self.players = [Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
-                            Player(player_names[1],
-                                   Platform('top', x=dx + w // 2, y=dy + h - PLATFORM_WIDTH, width=PLATFORM_HEIGHT, height=PLATFORM_WIDTH)),
-                            Bot('Bot', Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
-                            Player(player_names[2], Platform('bottom', x=dx + w // 2, y=dy, width=PLATFORM_HEIGHT, height=PLATFORM_WIDTH))]
+            self.players = [
+                Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
+                Player(player_names[1], Platform('top', x=dx + w // 2, y=dy + h - PLATFORM_WIDTH, width=PLATFORM_HEIGHT, height=PLATFORM_WIDTH)),
+                Bot('Bot', Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
+                Player(player_names[2], Platform('bottom', x=dx + w // 2, y=dy, width=PLATFORM_HEIGHT, height=PLATFORM_WIDTH))
+            ]
             self.labels_lst = [
-                pyglet.text.Label(f'{player_names[0]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.2,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label(f'{player_names[1]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.4,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label(f'{player_names[2]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.6,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label('Bot - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.8,
-                                  anchor_x='left', anchor_y='top'),
+                self.__get_label(player_names[0], 0, h * 0.2),
+                self.__get_label(player_names[1], 0, h * 0.4),
+                self.__get_label(player_names[2], 0, h * 0.6),
+                self.__get_label('Bot', 0, h * 0.8)
             ]
         elif self.number_players == 4:
-            self.players = [Player(player_names[0],
-                                   Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
-                            Player(player_names[1],
-                                   Platform('top', x=dx + w // 2, y=dy + h - PLATFORM_WIDTH, width=PLATFORM_HEIGHT,
-                                            height=PLATFORM_WIDTH)),
-                            Player(player_names[2], Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH,
-                                                height=PLATFORM_HEIGHT)),
-                            Player(player_names[3], Platform('bottom', x=dx + w // 2, y=dy, width=PLATFORM_HEIGHT,
-                                                             height=PLATFORM_WIDTH))]
-            self.labels_lst = [
-                pyglet.text.Label(f'{player_names[0]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10,
-                                  y=h * 0.2,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label(f'{player_names[1]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10,
-                                  y=h * 0.4,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label(f'{player_names[2]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10,
-                                  y=h * 0.6,
-                                  anchor_x='left', anchor_y='top'),
-                pyglet.text.Label(f'{player_names[3]} - 0', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.8,
-                                  anchor_x='left', anchor_y='top'),
+            self.players = [
+                Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
+                Player(player_names[1], Platform('top', x=dx + w // 2, y=dy + h - PLATFORM_WIDTH, width=PLATFORM_HEIGHT, height=PLATFORM_WIDTH)),
+                Player(player_names[2], Platform('right', x=w + dx - PLATFORM_WIDTH, y=dy + h // 2, width=PLATFORM_WIDTH,height=PLATFORM_HEIGHT)),
+                Player(player_names[3], Platform('bottom', x=dx + w // 2, y=dy, width=PLATFORM_HEIGHT, height=PLATFORM_WIDTH))
             ]
+            self.labels_lst = [
+                self.__get_label(player_names[0],0,h * 0.2),
+                self.__get_label(player_names[1],0,h * 0.4),
+                self.__get_label(player_names[2],0,h * 0.6),
+                self.__get_label(player_names[3],0,h * 0.8)
+            ]
+
+    def __get_label(self,name,score,y,x=10,anchor_x='left',anchor_y='top'):
+        return pyglet.text.Label(f'{name} - {score}',
+                                        font_name='Times New Roman', font_size=FONT_SIZE, x=x,
+                                        y=y, anchor_x=anchor_x, anchor_y=anchor_y)
 
     def check_wall_collision(self):
         w, h = self.board.width, self.board.height
         collision = self.ball.check_bounds(WINDOW_WIDTH,WINDOW_HEIGHT,BOARD_POS_X,BOARD_POS_Y)
         if collision == 'left':
             self.players[0].score += 1
-            self.labels_lst[0] = pyglet.text.Label(f'{self.players[0].name} - {self.players[0].score}', font_name='Times New Roman', font_size=FONT_SIZE, x=10, y=h * 0.2, anchor_x='left', anchor_y='top')
+            self.labels_lst[0] = self.__get_label(self.players[0].name, self.players[0].score, h * 0.2)
         elif collision == 'top':
             self.players[1].score += 1
-            self.labels_lst[1] = pyglet.text.Label(f'{self.players[1].name} - {self.players[1].score}',
-                                        font_name='Times New Roman', font_size=FONT_SIZE, x=10,
-                                        y=h * 0.4, anchor_x='left', anchor_y='top')
+            self.labels_lst[1] = self.__get_label(self.players[1].name,self.players[1].score,h*0.4)
         elif collision == 'right':
             self.players[2].score += 1
-            self.labels_lst[2] = pyglet.text.Label(f'{self.players[2].name} - {self.players[2].score}',
-                                        font_name='Times New Roman', font_size=FONT_SIZE, x=10,
-                                        y=h * 0.6, anchor_x='left', anchor_y='top')
+            self.labels_lst[2] = self.__get_label(self.players[2].name, self.players[2].score, h * 0.6)
         elif collision == 'bottom':
             self.players[3].score += 1
-            self.labels_lst[3] = pyglet.text.Label(f'{self.players[3].name} - {self.players[3].score}',
-                                        font_name='Times New Roman', font_size=FONT_SIZE, x=10,
-                                        y=h * 0.8, anchor_x='left', anchor_y='top')
-
-
-    def set_score(self,player_name,new_score):
-        pass
+            self.labels_lst[3] = self.__get_label(self.players[3].name, self.players[3].score, h * 0.8)
 
     def draw_labels(self):
         for label in self.labels_lst:
