@@ -1,81 +1,92 @@
 import PySimpleGUI as sg
+import threading
 
-sg.theme()  # Add a touch of color
-# All the stuff inside your window.
-main_menu_layout = [[sg.Text('Start menu', justification='center', size=(100, 3))],
-                    [sg.Button('Single player game', size=(100, 2))],
-                    [sg.Button('Multiplayer game', size=(100, 2))],
-                    [sg.Button('Exit', size=(100, 2))]]
+class Gui:
+    def __init__(self):
+        self.__is_running = True
 
-multiplayer_menu_layout = [
-    [sg.Text('Multiplayer game', justification='center', size=(100, 2))],
-    [sg.Text('Name:          '), sg.Input()],
-    [sg.Text('Server name:'), sg.Input()],
-    [sg.Text('IP:               '), sg.Input()],
-    [sg.Text('Port:            '), sg.Input()],
-    [sg.Text('Select number of players'), sg.Combo(['2','3','4'], default_value=2, size=(10, 2))],
-    [sg.Button('Run server', size=(100, 2))],
-    [sg.Button('Connect to server', size=(100, 2))],
-    [sg.Button('Show available servers list', size=(100, 2))],
-    [sg.Button('Back', size=(100, 2))]]
+        self.__main_menu_layout = [[sg.Text('Start menu', justification='center', size=(100, 3))],
+                                   [sg.Button('Single player game',key='-SPG-', size=(100, 2))],
+                                   [sg.Button('Multiplayer game',key='-MPG-', size=(100, 2))],
+                                   [sg.Button('Exit',key='-EXIT-', size=(100, 2))]]
 
-data = [['qwerty','127.0.0.1', '8080', '1/2'] for __ in range(5)]
-headings = ['Server name','IP address', 'Port', 'Players']
-servers_list_layout = [
-    [sg.Text('Available servers', justification='center', size=(100, 2))],
-    [sg.Table(values=data, headings=headings, size=(20, 7),
-              display_row_numbers=True, pad=(10, 10),
-              auto_size_columns=True,
-              key='-TABLE-',row_height=30)],
-    [sg.Button('Update', size=(100, 2))],
-    [sg.Button('Back to menu', size=(100, 2))],
-]
+        self.__multiplayer_menu_layout = [
+            [sg.Text('Multiplayer game', justification='center', size=(100, 2))],
+            [sg.Text('Name:          '), sg.Input(key='name')],
+            [sg.Text('Server name:'), sg.Input(key='server name')],
+            [sg.Text('IP:               '), sg.Input(key='ip')],
+            [sg.Text('Port:            '), sg.Input(key='port')],
+            [sg.Text('Select number of players'), sg.Combo(['2', '3', '4'],key='number players', default_value=2, size=(10, 2))],
+            [sg.Button('Run server',key='-RUN-SERVER-', size=(100, 2))],
+            [sg.Button('Connect to server',key='-CONNECT-', size=(100, 2))],
+            [sg.Button('Show available servers list',key='-SHOW-SERVERS-', size=(100, 2))],
+            [sg.Button('Back',key='-BACK-', size=(100, 2))]]
 
-layouts = [[sg.Column(main_menu_layout, key='-MAIN_MENU-'),
-            sg.Column(multiplayer_menu_layout, visible=False, key='-MUPTIPLAYER_MENU-'),
-            sg.Column(servers_list_layout, visible=False, key='-SERVERS_MENU-')]]
+        self.__table_data = [['qwerty', '127.0.0.1', '8080', '1/2'] for __ in range(5)]
+        self.__table_headings = ['Server name', 'IP address', 'Port', 'Players']
 
-# Create the Window
-window = sg.Window('Ping pong menu', layouts, size=(400, 400), icon='menu_icon.ico')
-# Event Loop to process "events" and get the "values" of the inputs
-while True:
-    event, values = window.read()
-    print(event, values)
-    if event == sg.WIN_CLOSED or event == 'Exit':  # if user closes window or clicks cancel
-        break
+        self.__servers_list_layout = [
+            [sg.Text('Available servers', justification='center', size=(100, 2))],
+            [sg.Table(values=self.__table_data, headings=self.__table_headings, size=(20, 7),
+                      display_row_numbers=True, pad=(10, 10),
+                      auto_size_columns=True,
+                      key='-TABLE-', row_height=30)],
+            [sg.Button('Update',key='-UPDATE-SERVERS-TABLE-', size=(100, 2))],
+            [sg.Button('Back to menu',key='-BACK-TO-MENU-', size=(100, 2))],
+        ]
 
-    elif event == 'Single player game':
-        pass
+        self.__layouts = [[sg.Column(self.__main_menu_layout, key='-MAIN_MENU-'),
+                           sg.Column(self.__multiplayer_menu_layout, visible=False, key='-MUPTIPLAYER_MENU-'),
+                           sg.Column(self.__servers_list_layout, visible=False, key='-SERVERS_MENU-')]]
 
-    elif event == 'Connect to server':
-        pass
+        self.__window = sg.Window('Ping pong menu', self.__layouts, size=(400, 400), icon='menu_icon.ico')
 
-    elif event == 'Run server':
-        pass
+    def start(self):
+        thread = threading.Thread(target=self.__run)
+        thread.start()
 
-    elif event == 'Update':
-        data.append(['my server','127.0.0.1', '8080', '1/2'])
-        window['-TABLE-'].update(values=data)
+    def close(self):
+        self.__is_running = False
 
-    elif event == 'Back to menu':
-        window['-MAIN_MENU-'].update(visible=False)
-        window['-MUPTIPLAYER_MENU-'].update(visible=True)
-        window['-SERVERS_MENU-'].update(visible=False)
+    def __run(self):
+        sg.theme()  # Add a touch of color
+        while self.__is_running:
+            event, values = self.__window.read(timeout=10)
+            print(event, values)
+            if event == sg.WIN_CLOSED or event == '-EXIT-':  # if user closes window or clicks cancel
+                self.close()
 
-    elif event == 'Show available servers list':
-        window['-MAIN_MENU-'].update(visible=False)
-        window['-MUPTIPLAYER_MENU-'].update(visible=False)
-        window['-SERVERS_MENU-'].update(visible=True)
+            elif event == '-SPG-':
+                pass
 
-    elif event == 'Multiplayer game':
-        window['-MAIN_MENU-'].update(visible=False)
-        window['-MUPTIPLAYER_MENU-'].update(visible=True)
-        window['-SERVERS_MENU-'].update(visible=False)
+            elif event == '-CONNECT-':
+                pass
 
+            elif event == '-RUN-SERVER-':
+                pass
 
-    elif event == 'Back':
-        window['-MAIN_MENU-'].update(visible=True)
-        window['-MUPTIPLAYER_MENU-'].update(visible=False)
-        window['-SERVERS_MENU-'].update(visible=False)
+            elif event == '-UPDATE-SERVERS-TABLE-':
+                self.__table_data.append(['my server', '127.0.0.1', '8080', '1/2'])
+                self.__window['-TABLE-'].update(values=self.__table_data)
 
-window.close()
+            elif event == '-BACK-TO-MENU-':
+                self.__window['-MAIN_MENU-'].update(visible=False)
+                self.__window['-MUPTIPLAYER_MENU-'].update(visible=True)
+                self.__window['-SERVERS_MENU-'].update(visible=False)
+
+            elif event == '-SHOW-SERVERS-':
+                self.__window['-MAIN_MENU-'].update(visible=False)
+                self.__window['-MUPTIPLAYER_MENU-'].update(visible=False)
+                self.__window['-SERVERS_MENU-'].update(visible=True)
+
+            elif event == '-MPG-':
+                self.__window['-MAIN_MENU-'].update(visible=False)
+                self.__window['-MUPTIPLAYER_MENU-'].update(visible=True)
+                self.__window['-SERVERS_MENU-'].update(visible=False)
+
+            elif event == '-BACK-':
+                self.__window['-MAIN_MENU-'].update(visible=True)
+                self.__window['-MUPTIPLAYER_MENU-'].update(visible=False)
+                self.__window['-SERVERS_MENU-'].update(visible=False)
+
+        self.__window.close()

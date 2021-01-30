@@ -36,4 +36,3 @@ class Client:
     def disconnect(self):
         self.__socket.close()
         self.__socket = None
-

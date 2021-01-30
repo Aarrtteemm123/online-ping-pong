@@ -1,7 +1,5 @@
 import socket
 import threading
-import time
-
 from client import Client
 
 HOST = 'localhost'
@@ -60,6 +58,12 @@ class Server:
             print(e)
         except Exception as e:
             print(e)
+
+    def get_data(self, addr):
+        with self.__lock:
+            if addr in self.__connection_addr_dict:
+                return self.__connection_addr_dict[addr]
+        raise Exception('Connection does not exist')
 
     def __listen_new_connection(self, connection, address):
         with connection:
