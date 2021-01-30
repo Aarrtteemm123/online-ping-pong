@@ -1,10 +1,16 @@
+import random
+
 import pyglet
-from pyglet import shapes
+from pyglet import shapes, window
 from pyglet.window import key
 from config import *
 
-class Game:
+class Game(pyglet.window.Window):
+
     def __init__(self, player_names):
+        super().__init__(width=WINDOW_WIDTH,height=WINDOW_HEIGHT,caption=WINDOW_CAPTION)
+        self.set_icon(pyglet.image.load('menu_icon.ico'))
+        self.set_location(WINDOW_POS_X, WINDOW_POS_Y)
         self.number_players = len(player_names)
         self.board = shapes.Rectangle(x=BOARD_POS_X, y=BOARD_POS_Y, width=BOARD_WIDTH, height=BOARD_HEIGHT, color=BOARD_COLOR)
         dx, dy = self.board.x, self.board.y
@@ -54,6 +60,26 @@ class Game:
                 self.__get_label(player_names[2],0,h * 0.6),
                 self.__get_label(player_names[3],0,h * 0.8)
             ]
+
+    def update(self,dt):
+        for player in self.players:
+            player.platform.update(dt)
+        self.ball.update(dt)
+        self.check_wall_collision()
+
+    def start_game(self):
+        pyglet.clock.schedule_interval(self.update, 1 / FPS_LIMIT)
+        pyglet.app.run()
+
+    def on_draw(self):
+        self.clear()
+        self.draw_labels()
+        self.draw_board()
+
+    def conn_to_platform(self, player_name): # set player for control platform
+        player = next(filter(lambda x: x.name == player_name,self.players),None)
+        if player is not None:
+            self.push_handlers(player.platform.key_handler) # connect player to platform
 
     def __get_label(self,name,score,y,x=10,anchor_x='left',anchor_y='top'):
         return pyglet.text.Label(f'{name} - {score}',
@@ -105,6 +131,11 @@ class Ball(pyglet.shapes.Circle):
         super().__init__(*args, **kwargs)
 
         self.speed_x, self.speed_y = 0.0, 0.0
+
+    def set_random_speed_direction(self):
+        while self.speed_x == 0 and self.speed_y == 0:
+            self.speed_x = random.choice([0, 250, -250])
+            self.speed_y = random.choice([0, 250, -250])
 
     def update(self, dt):
         self.x += self.speed_x * dt
