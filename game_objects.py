@@ -1,7 +1,7 @@
 import random
 
 import pyglet
-from pyglet import shapes, window
+from pyglet import shapes
 from pyglet.window import key
 from config import *
 
@@ -64,6 +64,7 @@ class Game(pyglet.window.Window):
     def update(self,dt):
         for player in self.players:
             player.platform.update(dt)
+            player.platform.check_bounds(self.board.width,self.board.height,self.board.x,self.board.y)
         self.ball.update(dt)
         self.check_wall_collision()
 
@@ -88,19 +89,32 @@ class Game(pyglet.window.Window):
 
     def check_wall_collision(self):
         w, h = self.board.width, self.board.height
-        collision = self.ball.check_bounds(WINDOW_WIDTH,WINDOW_HEIGHT,BOARD_POS_X,BOARD_POS_Y)
-        if collision == 'left':
-            self.players[0].score += 1
-            self.labels_lst[0] = self.__get_label(self.players[0].name, self.players[0].score, h * 0.2)
-        elif collision == 'top':
-            self.players[1].score += 1
-            self.labels_lst[1] = self.__get_label(self.players[1].name,self.players[1].score,h*0.4)
-        elif collision == 'right':
-            self.players[2].score += 1
-            self.labels_lst[2] = self.__get_label(self.players[2].name, self.players[2].score, h * 0.6)
-        elif collision == 'bottom':
-            self.players[3].score += 1
-            self.labels_lst[3] = self.__get_label(self.players[3].name, self.players[3].score, h * 0.8)
+        wall = self.ball.fix_bounds(WINDOW_WIDTH, WINDOW_HEIGHT, BOARD_POS_X, BOARD_POS_Y)
+        if wall:
+            player = next(filter(lambda x:x.platform.pos == wall,self.players),None)
+            if player:
+                collision = player.platform.check_ball_collision(self.ball)
+                if len(self.players) == 4:
+                    if wall == 'left' and collision != wall:
+                        self.players[0].score += 1
+                        self.labels_lst[0] = self.__get_label(self.players[0].name, self.players[0].score, h * 0.2)
+                    elif wall == 'top' and collision != wall:
+                        self.players[1].score += 1
+                        self.labels_lst[1] = self.__get_label(self.players[1].name, self.players[1].score, h * 0.4)
+                    elif wall == 'right' and collision != wall:
+                        self.players[2].score += 1
+                        self.labels_lst[2] = self.__get_label(self.players[2].name, self.players[2].score, h * 0.6)
+                    elif wall == 'bottom' and collision != wall:
+                        self.players[3].score += 1
+                        self.labels_lst[3] = self.__get_label(self.players[3].name, self.players[3].score, h * 0.8)
+                elif len(self.players) == 2:
+                    if wall == 'left' and collision != wall:
+                        self.players[0].score += 1
+                        self.labels_lst[0] = self.__get_label(self.players[0].name, self.players[0].score, h * 0.25)
+                    elif wall == 'right' and collision != wall:
+                        self.players[1].score += 1
+                        self.labels_lst[1] = self.__get_label(self.players[1].name, self.players[1].score, h * 0.75)
+
 
     def draw_labels(self):
         for label in self.labels_lst:
@@ -133,7 +147,7 @@ class Ball(pyglet.shapes.Circle):
         self.speed_x, self.speed_y = 0.0, 0.0
 
     def set_random_speed_direction(self):
-        while self.speed_x == 0 and self.speed_y == 0:
+        while self.speed_x == 0 or self.speed_y == 0:
             self.speed_x = random.choice([0, 250, -250])
             self.speed_y = random.choice([0, 250, -250])
 
@@ -141,7 +155,7 @@ class Ball(pyglet.shapes.Circle):
         self.x += self.speed_x * dt
         self.y += self.speed_y * dt
 
-    def check_bounds(self, max_x, max_y, min_x, min_y):
+    def fix_bounds(self,max_x, max_y, min_x, min_y):
         if self.x < min_x + self.radius:
             self.x = min_x + self.radius
             self.speed_x *= -1
@@ -161,12 +175,33 @@ class Ball(pyglet.shapes.Circle):
 
 
 class Platform(pyglet.shapes.Rectangle):
-    def __init__(self, pos, speed=50.0, *args, **kwargs):
+    def __init__(self, pos, speed=200.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.pos = pos
         self.speed = speed
         self.key_handler = key.KeyStateHandler()
+
+    def check_ball_collision(self,ball):
+        if self.pos == 'bottom' and self.y < ball.y < self.y + self.width and self.x < ball.x < self.x + self.width:
+            return self.pos
+        if self.pos == 'top' and self.y < ball.y + ball.radius < self.y + self.width and self.x < ball.x < self.x + self.width:
+            return self.pos
+        if self.pos == 'left' and self.y < ball.y < self.y + self.height and self.x < ball.x < self.x + self.height:
+            return self.pos
+        if self.pos == 'right' and self.y < ball.y < self.y + self.height and self.x < ball.x + ball.radius < self.x + self.height:
+            return self.pos
+
+    def check_bounds(self, max_x, max_y, min_x, min_y):
+        if (self.pos == 'left' or self.pos == 'right') and self.y < min_y:
+            self.y = 0
+        elif (self.pos == 'left' or self.pos == 'right') and self.y > max_y - self.height:
+            self.y = max_y - self.height
+        elif (self.pos == 'top' or self.pos == 'bottom') and self.x < min_x:
+            self.x = min_x
+        elif (self.pos == 'top' or self.pos == 'bottom') and self.x > max_x + self.width:
+            self.x = max_x + self.width
+
 
     def update(self, dt):
         if self.pos == 'left' and self.key_handler[key.LEFT]:
