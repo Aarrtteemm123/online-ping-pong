@@ -1,5 +1,4 @@
 import random
-
 import pyglet
 from pyglet import shapes
 from pyglet.window import key
@@ -16,6 +15,7 @@ class Game(pyglet.window.Window):
         dx, dy = self.board.x, self.board.y
         w, h = self.board.width, self.board.height
         self.ball = Ball(x=dx + w // 2, y=dy + h // 2, radius=BALL_RADIUS, segments=BALL_SEGMENTS, color=BALL_COLOR)
+        self.ball.set_random_speed_direction()
         if self.number_players == 1:
             self.players = [
                 Player(player_names[0], Platform('left', x=dx, y=dy + h // 2, width=PLATFORM_WIDTH, height=PLATFORM_HEIGHT)),
@@ -64,9 +64,9 @@ class Game(pyglet.window.Window):
     def update(self,dt):
         for player in self.players:
             player.platform.update(dt)
-            player.platform.check_bounds(self.board.width,self.board.height,self.board.x,self.board.y)
+            player.platform.check_bounds(self.board.width, self.board.height, self.board.x, self.board.y)
         self.ball.update(dt)
-        self.check_wall_collision()
+        self.__check_wall_collision()
 
     def start_game(self):
         pyglet.clock.schedule_interval(self.update, 1 / FPS_LIMIT)
@@ -74,8 +74,8 @@ class Game(pyglet.window.Window):
 
     def on_draw(self):
         self.clear()
-        self.draw_labels()
-        self.draw_board()
+        self.__draw_labels()
+        self.__draw_board()
 
     def conn_to_platform(self, player_name): # set player for control platform
         player = next(filter(lambda x: x.name == player_name,self.players),None)
@@ -87,7 +87,7 @@ class Game(pyglet.window.Window):
                                         font_name='Times New Roman', font_size=FONT_SIZE, x=x,
                                         y=y, anchor_x=anchor_x, anchor_y=anchor_y)
 
-    def check_wall_collision(self):
+    def __check_wall_collision(self):
         w, h = self.board.width, self.board.height
         wall = self.ball.fix_bounds(WINDOW_WIDTH, WINDOW_HEIGHT, BOARD_POS_X, BOARD_POS_Y)
         if wall:
@@ -116,11 +116,11 @@ class Game(pyglet.window.Window):
                         self.labels_lst[1] = self.__get_label(self.players[1].name, self.players[1].score, h * 0.75)
 
 
-    def draw_labels(self):
+    def __draw_labels(self):
         for label in self.labels_lst:
             label.draw()
 
-    def draw_board(self):
+    def __draw_board(self):
         self.board.draw()
         for player in self.players:
             player.platform.draw()
@@ -178,48 +178,56 @@ class Platform(pyglet.shapes.Rectangle):
     def __init__(self, pos, speed=200.0, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.pos = pos
+        self.__pos = pos
         self.speed = speed
-        self.key_handler = key.KeyStateHandler()
+        self.__key_handler = key.KeyStateHandler()
+
+    @property
+    def key_handler(self):
+        return self.__key_handler
+
+    @property
+    def pos(self):
+        return self.__pos
 
     def check_ball_collision(self,ball):
-        if self.pos == 'bottom' and self.y < ball.y < self.y + self.width and self.x < ball.x < self.x + self.width:
-            return self.pos
-        if self.pos == 'top' and self.y < ball.y + ball.radius < self.y + self.width and self.x < ball.x < self.x + self.width:
-            return self.pos
-        if self.pos == 'left' and self.y < ball.y < self.y + self.height and self.x < ball.x < self.x + self.height:
-            return self.pos
-        if self.pos == 'right' and self.y < ball.y < self.y + self.height and self.x < ball.x + ball.radius < self.x + self.height:
-            return self.pos
+        if self.__pos == 'bottom' and self.y < ball.y < self.y + self.width and self.x < ball.x < self.x + self.width:
+            return self.__pos
+        if self.__pos == 'top' and self.y < ball.y + ball.radius < self.y + self.width and self.x < ball.x < self.x + self.width:
+            return self.__pos
+        if self.__pos == 'left' and self.y < ball.y < self.y + self.height and self.x < ball.x < self.x + self.height:
+            return self.__pos
+        if self.__pos == 'right' and self.y < ball.y < self.y + self.height and self.x < ball.x + ball.radius < self.x + self.height:
+            return self.__pos
 
     def check_bounds(self, max_x, max_y, min_x, min_y):
-        if (self.pos == 'left' or self.pos == 'right') and self.y < min_y:
+        if (self.__pos == 'left' or self.__pos == 'right') and self.y < min_y:
             self.y = 0
-        elif (self.pos == 'left' or self.pos == 'right') and self.y > max_y - self.height:
+        elif (self.__pos == 'left' or self.__pos == 'right') and self.y > max_y - self.height:
             self.y = max_y - self.height
-        elif (self.pos == 'top' or self.pos == 'bottom') and self.x < min_x:
+        elif (self.__pos == 'top' or self.__pos == 'bottom') and self.x < min_x:
             self.x = min_x
-        elif (self.pos == 'top' or self.pos == 'bottom') and self.x > max_x + self.width:
+        elif (self.__pos == 'top' or self.__pos == 'bottom') and self.x > max_x + self.width:
             self.x = max_x + self.width
 
 
     def update(self, dt):
-        if self.pos == 'left' and self.key_handler[key.LEFT]:
+        if self.__pos == 'left' and self.__key_handler[key.LEFT]:
             self.y += self.speed * dt
-        elif self.pos == 'left' and self.key_handler[key.RIGHT]:
+        elif self.__pos == 'left' and self.__key_handler[key.RIGHT]:
             self.y -= self.speed * dt
 
-        elif self.pos == 'right' and self.key_handler[key.LEFT]:
+        elif self.__pos == 'right' and self.__key_handler[key.LEFT]:
             self.y -= self.speed * dt
-        elif self.pos == 'right' and self.key_handler[key.RIGHT]:
+        elif self.__pos == 'right' and self.__key_handler[key.RIGHT]:
             self.y += self.speed * dt
 
-        elif self.pos == 'top' and self.key_handler[key.LEFT]:
+        elif self.__pos == 'top' and self.__key_handler[key.LEFT]:
             self.x -= self.speed * dt
-        elif self.pos == 'top' and self.key_handler[key.RIGHT]:
+        elif self.__pos == 'top' and self.__key_handler[key.RIGHT]:
             self.x += self.speed * dt
 
-        elif self.pos == 'bottom' and self.key_handler[key.LEFT]:
+        elif self.__pos == 'bottom' and self.__key_handler[key.LEFT]:
             self.x -= self.speed * dt
-        elif self.pos == 'bottom' and self.key_handler[key.RIGHT]:
+        elif self.__pos == 'bottom' and self.__key_handler[key.RIGHT]:
             self.x += self.speed * dt

@@ -58,7 +58,7 @@ class Gui:
         sg.theme()  # Add a touch of color
         while self.__is_running:
             event, values = self.__window.read(timeout=10)
-            print(event, values)
+            #print(event, values)
             if event == sg.WIN_CLOSED or event == '-EXIT-':  # if user closes window or clicks cancel
                 self.close()
 

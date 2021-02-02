@@ -1,7 +1,7 @@
 from game_objects import  Game
+from gui import Gui
+from config import *
 
-game = Game(['Pl1','Pl2','Pl3','Pl4'])
+gui = Gui()
+gui.start()
 
-game.conn_to_platform('Pl3')
-game.ball.set_random_speed_direction()
-game.start_game()
