@@ -17,6 +17,7 @@ class Gui:
     def __init__(self):
 
         self.server = None
+        self.user_data = UserData()
         self.client = None
 
         self.__main_menu_layout = [[sg.Text('Start menu', justification='center', size=(100, 3))],
@@ -66,18 +67,21 @@ class Gui:
             print(e)
 
     def start(self):
-        returnValue = ctypes.windll.user32.MessageBoxA(None, b"Main text", b"Title text", 0x40 | 0x0)
-        print(returnValue)
         sg.theme()  # Add a touch of color
         while True:
             try:
                 event, values = self.__window.read(timeout=10)
                 #print(event, values)
+                if self.server and self.server.connections == self.user_data.max_players - 1:
+                    print('running game')
                 if event == sg.WIN_CLOSED or event == '-EXIT-':  # if user closes window or clicks cancel
                     if self.client is not None:
                         self.client.disconnect()
                     if self.server is not None:
                         self.server.stop()
+                    if self.user_data and self.user_data.server_name != '' and self.user_data.is_server:
+                        res = requests.delete(f'{BASIC_URL}/delete_server', data=dict(
+                            name=self.user_data.server_name))
                     break
 
                 elif event == '-SPG-':
@@ -90,6 +94,9 @@ class Gui:
                     self.__window.un_hide()
 
                 elif event == '-CONNECT-':
+                    if self.user_data.is_server:
+                        res = requests.delete(f'{BASIC_URL}/delete_server', data=dict(
+                            name=self.user_data.server_name))
                     if values['server name'] != '' and values['ip'] != '' and values['port'] != '':
                         if self.server is not None:
                             self.server.stop()
@@ -98,12 +105,14 @@ class Gui:
                             self.client.disconnect()
                         res = requests.put(f'{BASIC_URL}/connect_to_server', data=dict(name=values['server name']))
                         if res.status_code == 200:
+                            self.user_data = UserData(values['name'],values['server name'],values['ip'],int(values['port']))
                             self.client = Client(values['ip'], int(values['port']))
                             self.client.connect()
+                            ctypes.windll.user32.MessageBoxA(None, bytes(f"You successfully connected to server {self.user_data.server_name}",'utf-8'), b"Info", 0x40 | 0x0)
                         else:
-                            print(res.text)
+                            ctypes.windll.user32.MessageBoxA(None, bytes(res.text,'utf-8'), b"Warning", 0x30 | 0x0)
                     else:
-                        print('Input data')
+                        ctypes.windll.user32.MessageBoxA(None, b"Server name, ip and port are required", b"Info", 0x40 | 0x0)
 
                 elif event == '-RUN-SERVER-':
                     if self.client:
@@ -113,21 +122,24 @@ class Gui:
                         self.server.stop()
                         self.server = None
                         res = requests.delete(f'{BASIC_URL}/delete_server', data=dict(
-                            name=values['server name']))
-                        if res.status_code == 200:
-                            print('ok')
-                        else:
-                            print('bad news')
+                            name=self.user_data.server_name))
+                        if res.status_code != 200:
+                            ctypes.windll.user32.MessageBoxA(None, bytes(res.text,'utf-8'), b"Warning", 0x30 | 0x0)
+
                     if values['server name'] != '' and values['ip'] != '' and values['port'] != '':
+
                         res = requests.post(f'{BASIC_URL}/register_server',data=dict(
                             name=values['server name'],ip=values['ip'],port=values['port'],
                             players=1,max_players=values['number players']))
                         if res.status_code == 200:
+                            self.user_data = UserData(values['name'],values['server name'],values['ip'],int(values['port']),1,int(values['number players']),True)
                             self.server = Server('localhost',int(values['port']))
                             self.server.start()
-                        else: print(res.text)
+                            ctypes.windll.user32.MessageBoxA(None, b"Server successfully started", b"Info", 0x40 | 0x0)
+                        else:
+                            ctypes.windll.user32.MessageBoxA(None, bytes(res.text,'utf-8'), b"Warning", 0x30 | 0x0)
                     else:
-                        print('Input data')
+                        ctypes.windll.user32.MessageBoxA(None, b"Server name, ip and port are required", b"Info", 0x40 | 0x0)
 
                 elif event == '-UPDATE-SERVERS-TABLE-':
                     self.__load_servers()
@@ -156,6 +168,16 @@ class Gui:
                     self.__window['-SERVERS_MENU-'].update(visible=False)
 
             except Exception as e:
-                print(e)
+                ctypes.windll.user32.MessageBoxA(None, bytes(str(e),'utf-8'), b"Warning", 0x30 | 0x0)
 
         self.__window.close()
+
+class UserData:
+    def __init__(self,player_name='',server_name='',ip='',port=0, players = 0, max_players=0,is_server = False):
+        self.player_name = player_name
+        self.server_name = server_name
+        self.ip = ip
+        self.port = port
+        self.players = players
+        self.max_players = max_players
+        self.is_server = is_server

@@ -32,9 +32,13 @@ def connect_to_server():
     db = get_db()
     data = db.execute('select players, max_players from available_servers where name=?',(name,)).fetchall()
     if len(data) == 0:
-        return Response('The server does not exist')
+        res = app.make_response('The server does not exist')
+        res.status_code = 400
+        return res
     elif data[0][0] == data[0][1]:
-        return Response('The server is full')
+        res = app.make_response('The server is full')
+        res.status_code = 403
+        return res
     elif data[0][0] < data[0][1]:
         db.execute('update available_servers set players=? where name=?',(data[0][0]+1,name))
         db.commit()

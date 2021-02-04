@@ -83,5 +83,6 @@ class Server:
                     break
                 except Exception as e:
                     print(e)
+                    break
         self.close_connection(address)
         print('closing connection to', address)
