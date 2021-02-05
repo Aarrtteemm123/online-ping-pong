@@ -72,8 +72,30 @@ class Gui:
             try:
                 event, values = self.__window.read(timeout=10)
                 #print(event, values)
-                if self.server and self.server.connections == self.user_data.max_players - 1:
-                    print('running game')
+                if self.server and len(self.server.connections) == self.user_data.max_players - 1:
+                    print('Your game is ready!(Server)')
+                    self.__window.hide()
+                    res = requests.get(f'{BASIC_URL}/get_servers/name={self.user_data.server_name}')
+                    str_lst = json.loads(res.text)[0]['player_names']
+                    game = Game(json.loads(str_lst), self.server)
+                    game.conn_to_platform(self.user_data.player_name)
+                    game.start_game()
+                    self.server.stop()
+                    self.server = None
+                    self.__window.un_hide()
+                if self.client:
+                    res = requests.get(f'{BASIC_URL}/get_servers/name={self.user_data.server_name}')
+                    data = json.loads(res.text)[0]
+                    if data['players'] == data['max_players']:
+                        print('Your game is ready!(Client)')
+                        self.__window.hide()
+                        str_lst = data['player_names']
+                        game = Game(json.loads(str_lst), client=self.client)
+                        game.conn_to_platform(self.user_data.player_name)
+                        game.start_game()
+                        self.client.disconnect()
+                        self.client = None
+                        self.__window.un_hide()
                 if event == sg.WIN_CLOSED or event == '-EXIT-':  # if user closes window or clicks cancel
                     if self.client is not None:
                         self.client.disconnect()
@@ -90,6 +112,7 @@ class Gui:
                         player_name = values['name']
                     self.__window.hide()
                     game = Game([player_name])
+                    game.conn_to_platform(player_name)
                     game.start_game()
                     self.__window.un_hide()
 
@@ -103,7 +126,7 @@ class Gui:
                             self.server = None
                         if self.client:
                             self.client.disconnect()
-                        res = requests.put(f'{BASIC_URL}/connect_to_server', data=dict(name=values['server name']))
+                        res = requests.put(f'{BASIC_URL}/connect_to_server', data=dict(name=values['server name'],player_name=values['name']))
                         if res.status_code == 200:
                             self.user_data = UserData(values['name'],values['server name'],values['ip'],int(values['port']))
                             self.client = Client(values['ip'], int(values['port']))
@@ -130,7 +153,7 @@ class Gui:
 
                         res = requests.post(f'{BASIC_URL}/register_server',data=dict(
                             name=values['server name'],ip=values['ip'],port=values['port'],
-                            players=1,max_players=values['number players']))
+                            players=1,max_players=values['number players'],player_name=values['name']))
                         if res.status_code == 200:
                             self.user_data = UserData(values['name'],values['server name'],values['ip'],int(values['port']),1,int(values['number players']),True)
                             self.server = Server('localhost',int(values['port']))

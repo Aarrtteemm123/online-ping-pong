@@ -6,8 +6,10 @@ from config import *
 
 class Game(pyglet.window.Window):
 
-    def __init__(self, player_names):
+    def __init__(self, player_names, server=None, client=None):
         super().__init__(width=WINDOW_WIDTH,height=WINDOW_HEIGHT,caption=WINDOW_CAPTION)
+        #self.server = server
+        #self.client = client
         self.set_icon(pyglet.image.load('menu_icon.ico'))
         self.set_location(WINDOW_POS_X, WINDOW_POS_Y)
         self.number_players = len(player_names)
