@@ -6,6 +6,11 @@ from flask import Flask, request, g, Response
 app = Flask(__name__)
 DATABASE = 'servers.db'
 
+database = sqlite3.connect(DATABASE)
+database.execute('delete from available_servers where')
+database.commit()
+database.close()
+
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -90,4 +95,4 @@ def get_servers(name):
 def root():
     return 'Hello, gamers!'
 
-app.run(debug=True)
+app.run(debug=False)
