@@ -20,7 +20,7 @@ class Server:
     def send(self, addr, data):
         with self.__lock:
             if addr in self.__connection_addr_dict:
-                self.__connection_addr_dict[addr]['send'].append(data)
+                self.__connection_addr_dict[addr]['send'] = data
             else:
                 raise Exception('Connection does not exist')
 
@@ -32,7 +32,7 @@ class Server:
             while self.__is_running:
                 connection, address = s.accept()
                 print('accepted connection from ', address)
-                self.__connection_addr_dict[address] = dict(send=[],get=b'')
+                self.__connection_addr_dict[address] = dict(send=b'',get=b'')
                 connection_thread = threading.Thread(target=self.__listen_new_connection, args=(connection, address))
                 connection_thread.start()
         self.__connection_addr_dict.clear()
@@ -62,7 +62,7 @@ class Server:
     def get_data(self, addr):
         with self.__lock:
             if addr in self.__connection_addr_dict:
-                return self.__connection_addr_dict[addr]
+                return self.__connection_addr_dict[addr]['get']
         raise Exception('Connection does not exist')
 
     def __listen_new_connection(self, connection, address):
@@ -74,8 +74,9 @@ class Server:
                     with self.__lock:
                         if data:
                             self.__connection_addr_dict[address]['get'] = data
-                            if self.__connection_addr_dict[address]['send']:
-                                connection.sendall(self.__connection_addr_dict[address]['send'].pop(0))
+                            if self.__connection_addr_dict[address]['send'] != b'':
+                                connection.sendall(self.__connection_addr_dict[address]['send'])
+                                self.__connection_addr_dict[address]['send'] = b''
                             else:
                                 connection.sendall(b' ')
                 except ConnectionResetError as e:

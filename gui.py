@@ -69,7 +69,7 @@ class Gui:
     def start(self):
         sg.theme()  # Add a touch of color
         while True:
-            try:
+            #try:
                 event, values = self.__window.read(timeout=10)
                 #print(event, values)
                 if self.server and len(self.server.connections) == self.user_data.max_players - 1:
@@ -77,7 +77,7 @@ class Gui:
                     self.__window.hide()
                     res = requests.get(f'{BASIC_URL}/get_servers/name={self.user_data.server_name}')
                     str_lst = json.loads(res.text)[0]['player_names']
-                    game = Game(json.loads(str_lst), self.server)
+                    game = Game(json.loads(str_lst),self.user_data.player_name, self.server)
                     game.conn_to_platform(self.user_data.player_name)
                     game.start_game()
                     self.server.stop()
@@ -90,12 +90,13 @@ class Gui:
                         print('Your game is ready!(Client)')
                         self.__window.hide()
                         str_lst = data['player_names']
-                        game = Game(json.loads(str_lst), client=self.client)
+                        game = Game(json.loads(str_lst),self.user_data.player_name, client=self.client)
                         game.conn_to_platform(self.user_data.player_name)
                         game.start_game()
                         self.client.disconnect()
                         self.client = None
                         self.__window.un_hide()
+
                 if event == sg.WIN_CLOSED or event == '-EXIT-':  # if user closes window or clicks cancel
                     if self.client is not None:
                         self.client.disconnect()
@@ -111,7 +112,7 @@ class Gui:
                     if values['name'] != '':
                         player_name = values['name']
                     self.__window.hide()
-                    game = Game([player_name])
+                    game = Game([player_name],player_name)
                     game.conn_to_platform(player_name)
                     game.start_game()
                     self.__window.un_hide()
@@ -190,8 +191,8 @@ class Gui:
                     self.__window['-MUPTIPLAYER_MENU-'].update(visible=False)
                     self.__window['-SERVERS_MENU-'].update(visible=False)
 
-            except Exception as e:
-                ctypes.windll.user32.MessageBoxA(None, bytes(str(e),'utf-8'), b"Warning", 0x30 | 0x0)
+            #except Exception as e:
+                #ctypes.windll.user32.MessageBoxA(None, bytes(str(e),'utf-8'), b"Warning", 0x30 | 0x0)
 
         self.__window.close()
 

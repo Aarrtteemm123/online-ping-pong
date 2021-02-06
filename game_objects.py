@@ -1,3 +1,4 @@
+import json
 import random
 import pyglet
 from pyglet import shapes
@@ -6,10 +7,11 @@ from config import *
 
 class Game(pyglet.window.Window):
 
-    def __init__(self, player_names, server=None, client=None):
+    def __init__(self, player_names, host_name, server=None, client=None):
         super().__init__(width=WINDOW_WIDTH,height=WINDOW_HEIGHT,caption=WINDOW_CAPTION)
-        #self.server = server
-        #self.client = client
+        self.server = server
+        self.client = client
+        self.host_name = host_name
         self.set_icon(pyglet.image.load('menu_icon.ico'))
         self.set_location(WINDOW_POS_X, WINDOW_POS_Y)
         self.number_players = len(player_names)
@@ -67,8 +69,49 @@ class Game(pyglet.window.Window):
         for player in self.players:
             player.platform.update(dt)
             player.platform.check_bounds(self.board.width, self.board.height, self.board.x, self.board.y)
-        self.ball.update(dt)
-        self.__check_wall_collision()
+        if self.server:
+            self.ball.update(dt)
+            self.__check_wall_collision()
+            data = dict(
+                ball=dict(x=self.ball.x, y=self.ball.y, speed_x=self.ball.speed_x, speed_y=self.ball.speed_y),
+                names=[(pl.name,pl.score) for pl in self.players],
+                platforms=[(pl.platform.width, pl.platform.height, pl.platform.x, pl.platform.y) for pl in self.players]
+            )
+            encode_data = json.dumps(data,default=lambda x: x.__dict__).encode('utf-8')
+            for conn in self.server.connections:
+                self.server.send(conn, encode_data)
+                client_data = self.server.get_data(conn)
+                if client_data != b'':
+                    result_data = json.loads(client_data.decode('utf-8'))
+                    player = next(filter(lambda x: x.name == result_data['name'], self.players), None)
+                    player.platform.x, player.platform.y = result_data['platform']['x'],result_data['platform']['y']
+
+        elif self.client:
+            player = next(filter(lambda x: x.name == self.host_name, self.players), None)
+            data = dict(name=self.host_name,platform=dict(x=player.platform.x,y=player.platform.y))
+            response = self.client.send(json.dumps(data,default=lambda x: x.__dict__).encode('utf-8'))
+            if response != b' ':
+                server_data = json.loads(response.decode('utf-8'))
+                self.ball.x,self.ball.y = server_data['ball']['x'],server_data['ball']['y']
+                self.ball.speed_x,self.ball.speed_y = server_data['ball']['speed_x'],server_data['ball']['speed_y']
+                w, h = self.board.width, self.board.height
+                for i, pl in enumerate(self.players):
+                    if server_data['names'][i][0] != self.host_name:
+                        pl.platform.width, pl.platform.height, pl.platform.x, pl.platform.y = tuple(server_data['platforms'][i])
+                if len(server_data['names']) == 2:
+                    self.labels_lst = [
+                        self.__get_label(server_data['names'][0][0], server_data['names'][0][1], h * 0.25),
+                        self.__get_label(server_data['names'][1][0], server_data['names'][1][1], h * 0.75)
+                    ]
+                else:
+                    self.labels_lst = [
+                        self.__get_label(server_data['names'][0][0], server_data['names'][0][1], h * 0.2),
+                        self.__get_label(server_data['names'][1][0], server_data['names'][1][1], h * 0.4),
+                        self.__get_label(server_data['names'][2][0], server_data['names'][2][1], h * 0.6),
+                        self.__get_label(server_data['names'][3][0], server_data['names'][3][1], h * 0.8)
+                    ]
+
+
 
     def start_game(self):
         pyglet.clock.schedule_interval(self.update, 1 / FPS_LIMIT)
