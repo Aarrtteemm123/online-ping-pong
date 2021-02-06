@@ -69,7 +69,7 @@ class Gui:
     def start(self):
         sg.theme()  # Add a touch of color
         while True:
-            #try:
+            try:
                 event, values = self.__window.read(timeout=10)
                 #print(event, values)
                 if self.server and len(self.server.connections) == self.user_data.max_players - 1:
@@ -191,8 +191,8 @@ class Gui:
                     self.__window['-MUPTIPLAYER_MENU-'].update(visible=False)
                     self.__window['-SERVERS_MENU-'].update(visible=False)
 
-            #except Exception as e:
-                #ctypes.windll.user32.MessageBoxA(None, bytes(str(e),'utf-8'), b"Warning", 0x30 | 0x0)
+            except Exception as e:
+                ctypes.windll.user32.MessageBoxA(None, bytes(str(e),'utf-8'), b"Warning", 0x30 | 0x0)
 
         self.__window.close()
 

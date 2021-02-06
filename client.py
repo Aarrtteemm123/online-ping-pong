@@ -1,8 +1,5 @@
 import socket
 
-HOST = 'localhost'
-PORT = 65432
-
 class Client:
     def __init__(self,host,port):
         self.host = host

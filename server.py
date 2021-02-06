@@ -2,9 +2,6 @@ import socket
 import threading
 from client import Client
 
-HOST = 'localhost'
-PORT = 65432 # 65432
-
 class Server:
     def __init__(self,host, port):
         self.host = host
