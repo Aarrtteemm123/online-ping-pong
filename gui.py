@@ -42,9 +42,9 @@ class Gui:
 
         self.__servers_list_layout = [
             [sg.Text('Available servers', justification='center', size=(100, 2))],
-            [sg.Table(values=self.__table_data, headings=self.__table_headings, size=(30, 7),
+            [sg.Table(values=self.__table_data, headings=self.__table_headings, size=(50, 7),
                       display_row_numbers=False,pad=(10,10),
-                      auto_size_columns=True,
+                      auto_size_columns=False,
                       key='-TABLE-', row_height=30)],
             [sg.Button('Update',key='-UPDATE-SERVERS-TABLE-', size=(100, 2))],
             [sg.Button('Back to menu',key='-BACK-TO-MENU-', size=(100, 2))],
@@ -54,7 +54,7 @@ class Gui:
                            sg.Column(self.__multiplayer_menu_layout, visible=False, key='-MUPTIPLAYER_MENU-'),
                            sg.Column(self.__servers_list_layout, visible=False, key='-SERVERS_MENU-')]]
 
-        self.__window = sg.Window('Ping pong menu', self.__layouts, size=(400, 400), icon='menu_icon.ico')
+        self.__window = sg.Window('Ping pong menu', self.__layouts, size=(500, 400), icon='menu_icon.ico')
 
     def __load_servers(self):
         try:
@@ -157,7 +157,7 @@ class Gui:
                             players=1,max_players=values['number players'],player_name=values['name']))
                         if res.status_code == 200:
                             self.user_data = UserData(values['name'],values['server name'],values['ip'],int(values['port']),1,int(values['number players']),True)
-                            self.server = Server('localhost',int(values['port']))
+                            self.server = Server('',int(values['port']))
                             self.server.start()
                             ctypes.windll.user32.MessageBoxA(None, b"Server successfully started", b"Info", 0x40 | 0x0)
                         else:
