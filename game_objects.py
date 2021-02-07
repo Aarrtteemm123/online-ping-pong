@@ -67,8 +67,14 @@ class Game(pyglet.window.Window):
 
     def update(self,dt):
         for player in self.players:
-            player.platform.update(dt)
+            if type(player).__name__ == 'Bot':
+                player.step(self.ball, dt)
+            else:
+                player.platform.update(dt)
             player.platform.check_bounds(self.board.width, self.board.height, self.board.x, self.board.y)
+        if self.server is None and self.client is None:
+            self.ball.update(dt)
+            self.__check_wall_collision()
         if self.server:
             self.ball.update(dt)
             self.__check_wall_collision()
@@ -182,6 +188,31 @@ class Player:
 class Bot(Player):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.frames = 20
+        self.virtual_ball = Ball(x=0, y=0, radius=BALL_RADIUS)
+
+    def step(self,ball,dt):
+        self.virtual_ball = Ball(x=ball.x, y=ball.y, radius=BALL_RADIUS)
+        self.virtual_ball.speed_x, self.virtual_ball.speed_y = ball.speed_x, ball.speed_y
+        for __ in range(self.frames):
+            self.virtual_ball.update(dt)
+            self.virtual_ball.fix_bounds(WINDOW_WIDTH, WINDOW_HEIGHT, BOARD_POS_X, BOARD_POS_Y)
+
+        if (self.platform.pos == 'left' and ball.speed_x < 0) or \
+                (self.platform.pos == 'right' and ball.speed_x > 0):
+
+            if self.virtual_ball.y > self.platform.y + self.platform.height / 2:
+                self.platform.y += self.platform.speed * dt
+            if self.virtual_ball.y < self.platform.y + self.platform.height / 2:
+                self.platform.y -= self.platform.speed * dt
+
+        elif (self.platform.pos == 'top' and ball.speed_y > 0) or \
+                (self.platform.pos == 'bottom' and ball.speed_y < 0):
+
+            if self.virtual_ball.x > self.platform.x + self.platform.width / 2:
+                self.platform.x += self.platform.speed * dt
+            if self.virtual_ball.x < self.platform.x + self.platform.width / 2:
+                self.platform.x -= self.platform.speed * dt
 
 
 class Ball(pyglet.shapes.Circle):
@@ -193,8 +224,8 @@ class Ball(pyglet.shapes.Circle):
 
     def set_random_speed_direction(self):
         while self.speed_x == 0 or self.speed_y == 0:
-            self.speed_x = random.choice([0, 250, -250])
-            self.speed_y = random.choice([0, 250, -250])
+            self.speed_x = random.choice([0, 300, -300])
+            self.speed_y = random.choice([0, 300, -300])
 
     def update(self, dt):
         self.x += self.speed_x * dt
